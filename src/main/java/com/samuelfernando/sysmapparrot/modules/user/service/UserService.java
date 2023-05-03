@@ -57,6 +57,10 @@ public class UserService implements IUserService {
 	
 	@Override
 	public void createUser(CreateUserRequest user) {
+		if (userRepository.findByEmail(user.email).isPresent()) {
+			throw new BusinessRuleException("An error occurred when trying to create a user");
+		}
+		
 		Set<UUID> genericSet = new HashSet<UUID>();
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
 		UserProfile userProfile = new UserProfile(user.name, genericSet, genericSet, createdAt, updatedAt);
