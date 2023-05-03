@@ -23,4 +23,12 @@ public class ExceptionGlobalHandler {
 		details.setMessage(notFoundException.getMessage());
 		return new ResponseEntity<>(details, HttpStatus.NOT_FOUND);
 	}
+	
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<?> handleAuthenticationException(AuthenticationException authenticationException) {
+		ExceptionDetails details = new ExceptionDetails();
+		details.setStatus(HttpStatus.UNAUTHORIZED.value());
+		details.setMessage(authenticationException.getMessage());
+		return new ResponseEntity<>(details, HttpStatus.UNAUTHORIZED);
+	}
 }
