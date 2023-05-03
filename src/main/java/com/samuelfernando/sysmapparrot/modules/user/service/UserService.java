@@ -26,7 +26,7 @@ import com.samuelfernando.sysmapparrot.modules.user.repository.UserRepository;
 public class UserService implements IUserService {
 	@Autowired
 	private UserRepository userRepository;
-
+	
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
 		if (isEmpty(name)) {
@@ -44,6 +44,17 @@ public class UserService implements IUserService {
 		return UserProfileResponse.of(user);
 	}
 
+	@Override
+	public User findUserByEmail(String email) {
+		Optional<User> user = userRepository.findByEmail(email);
+		
+		if (!user.isPresent()) {
+			throw new NotFoundException("User not found");
+		}
+		
+		return user.get();
+	}
+	
 	@Override
 	public void createUser(CreateUserRequest user) {
 		Set<UUID> genericSet = new HashSet<UUID>();
