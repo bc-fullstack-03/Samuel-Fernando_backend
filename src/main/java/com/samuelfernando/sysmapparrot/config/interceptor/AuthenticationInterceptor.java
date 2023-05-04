@@ -1,6 +1,7 @@
 package com.samuelfernando.sysmapparrot.config.interceptor;
 
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -28,7 +29,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 		if (isPublicEndpoint(request)) {
 			return true;
 		}
-
+		
 		String token = request.getHeader(AUTHORIZATION);
 		String userId = jwtService.validateToken(token);
 
@@ -40,8 +41,13 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 	private boolean isPublicEndpoint(HttpServletRequest request) {
 		return Arrays
 				.stream(PublicEndpoints.values())
-				.anyMatch(publicEndpoint -> request.getRequestURI().equals(publicEndpoint.getPublicEndpoint())
-						&& request.getMethod().equals("POST"));
+				.anyMatch(publicEndpoint -> {
+					Pattern pattern = Pattern.compile(publicEndpoint.getPublicEndpoint());
+					String requestWithMethod = request.getMethod() + request.getRequestURI();
+					boolean match = pattern.matcher(requestWithMethod).find();
+					
+					return match;
+				});
 	}
 
 	private boolean isOptions(HttpServletRequest request) {
