@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,8 @@ import com.samuelfernando.sysmapparrot.modules.user.repository.UserRepository;
 public class UserService implements IUserService {
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private PasswordEncoder bcryptPasswordEncoder;
 	
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
@@ -65,6 +68,8 @@ public class UserService implements IUserService {
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
 		UserProfile userProfile = new UserProfile(user.name, genericSet, genericSet, createdAt, updatedAt);
 		User newUser = new User(user.name, user.email, user.password, userProfile, createdAt, updatedAt);
+		newUser.setPassword(bcryptPasswordEncoder.encode(newUser.getPassword()));
+		
 		userRepository.save(newUser);
 	}
 

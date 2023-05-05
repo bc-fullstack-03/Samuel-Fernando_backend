@@ -1,6 +1,7 @@
 package com.samuelfernando.sysmapparrot.modules.authentication.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.samuelfernando.sysmapparrot.config.exception.AuthenticationException;
@@ -16,12 +17,14 @@ public class AuthenticationService implements IAuthenticationService {
 	private IUserService userService;
 	@Autowired
 	private IJwtService jwtService;
+	@Autowired
+	private PasswordEncoder bcryptPasswordEncoder;
 	
 	@Override
 	public AuthenticateResponse authenticate(AuthenticateRequest request) {
 		User user = userService.findUserByEmail(request.email);
 		
-		if (user == null || !user.getPassword().equals(request.password)) {
+		if (user == null || !bcryptPasswordEncoder.matches(request.password, user.getPassword())) {
 			throw new AuthenticationException("Email or password are incorrect");
 		}
 		
