@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
@@ -29,7 +31,7 @@ public class UserService implements IUserService {
 	private UserRepository userRepository;
 	@Autowired
 	private PasswordEncoder bcryptPasswordEncoder;
-	
+
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
 		if (isEmpty(name)) {
@@ -50,26 +52,26 @@ public class UserService implements IUserService {
 	@Override
 	public User findUserByEmail(String email) {
 		Optional<User> user = userRepository.findByEmail(email);
-		
+
 		if (!user.isPresent()) {
 			throw new NotFoundException("User not found");
 		}
-		
+
 		return user.get();
 	}
-	
+
 	@Override
 	public void createUser(CreateUserRequest user) {
 		if (userRepository.findByEmail(user.email).isPresent()) {
 			throw new BusinessRuleException("An error occurred when trying to create a user");
 		}
-		
+
 		Set<UUID> genericSet = new HashSet<UUID>();
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
 		UserProfile userProfile = new UserProfile(user.name, genericSet, genericSet, createdAt, updatedAt);
 		User newUser = new User(user.name, user.email, user.password, userProfile, createdAt, updatedAt);
 		newUser.setPassword(bcryptPasswordEncoder.encode(newUser.getPassword()));
-		
+
 		userRepository.save(newUser);
 	}
 
@@ -77,8 +79,8 @@ public class UserService implements IUserService {
 	@Transactional
 	public void createUserProfileFollow(UUID id) {
 		User userToBeFollowed = findById(id);
-		// id will come from request user
-		User userToBeFollowing = findById(UUID.fromString("dfcc0ad5-d02f-410a-a6b0-345b68a2f147"));
+		User userToBeFollowing = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes()
+				.getAttribute("userId", RequestAttributes.SCOPE_REQUEST)));
 		validateProfileFollow(userToBeFollowed, userToBeFollowing);
 		userToBeFollowed.getUserProfile().getFollowers().add(userToBeFollowing.getId());
 		userToBeFollowing.getUserProfile().getFollowing().add(userToBeFollowed.getId());
@@ -87,10 +89,11 @@ public class UserService implements IUserService {
 	}
 
 	@Override
+	@Transactional
 	public void removeUserProfileFollow(UUID id) {
 		User userToBeUnfollowed = findById(id);
-		// id will come from request user
-		User userToBeUnfollowing = findById(UUID.fromString("dfcc0ad5-d02f-410a-a6b0-345b68a2f147"));
+		User userToBeUnfollowing = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes()
+				.getAttribute("userId", RequestAttributes.SCOPE_REQUEST)));
 		userToBeUnfollowed.getUserProfile().getFollowers().remove(userToBeUnfollowing.getId());
 		userToBeUnfollowing.getUserProfile().getFollowing().remove(userToBeUnfollowed.getId());
 		userRepository.save(userToBeUnfollowed);
