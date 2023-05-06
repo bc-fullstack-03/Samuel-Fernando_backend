@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class UserProfile {
 	private String name;
+	private String photoUri;
 	private Set<UUID> following;
 	private Set<UUID> followers;
 	private LocalDateTime createdAt;
@@ -29,6 +30,14 @@ public class UserProfile {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public String getPhotoUri() {
+		return photoUri;
+	}
+
+	public void setPhotoUri(String photoUri) {
+		this.photoUri = photoUri;
 	}
 
 	public Set<UUID> getFollowing() {
