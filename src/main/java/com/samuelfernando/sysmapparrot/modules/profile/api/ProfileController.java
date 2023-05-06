@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.samuelfernando.sysmapparrot.modules.profile.dto.UserProfileResponse;
 import com.samuelfernando.sysmapparrot.modules.user.service.IUserService;
@@ -38,5 +39,10 @@ public class ProfileController {
 	@PostMapping("/{id}/unfollow")
 	public void removeUserProfileFollow(@PathVariable UUID id) {
 		userService.removeUserProfileFollow(id);
+	}
+	
+	@PostMapping("/photo")
+	public void uploadProfilePhoto(@RequestParam("photo") MultipartFile photo) throws Exception {
+		userService.uploadProfilePhoto(photo);
 	}
 }

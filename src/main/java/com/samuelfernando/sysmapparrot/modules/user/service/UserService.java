@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
+import com.samuelfernando.sysmapparrot.modules.file.service.IFileUploadService;
 import com.samuelfernando.sysmapparrot.modules.profile.dto.UserProfileResponse;
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 import com.samuelfernando.sysmapparrot.modules.user.dto.CreateUserRequest;
@@ -31,6 +33,8 @@ public class UserService implements IUserService {
 	private UserRepository userRepository;
 	@Autowired
 	private PasswordEncoder bcryptPasswordEncoder;
+	@Autowired
+	private IFileUploadService fileUploadService;
 
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
@@ -69,6 +73,7 @@ public class UserService implements IUserService {
 		Set<UUID> genericSet = new HashSet<UUID>();
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
 		UserProfile userProfile = new UserProfile(user.name, genericSet, genericSet, createdAt, updatedAt);
+		userProfile.setPhotoUri("");
 		User newUser = new User(user.name, user.email, user.password, userProfile, createdAt, updatedAt);
 		newUser.setPassword(bcryptPasswordEncoder.encode(newUser.getPassword()));
 
@@ -98,6 +103,25 @@ public class UserService implements IUserService {
 		userToBeUnfollowing.getUserProfile().getFollowing().remove(userToBeUnfollowed.getId());
 		userRepository.save(userToBeUnfollowed);
 		userRepository.save(userToBeUnfollowing);
+	}
+
+	public void uploadProfilePhoto(MultipartFile photo) throws Exception {
+		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST)));
+
+		String photoUri = "";
+
+		try {
+			String filename = user.getId() + "."
+					+ photo.getOriginalFilename().substring(photo.getOriginalFilename().lastIndexOf(".") + 1);
+
+			photoUri = fileUploadService.upload(photo, filename);
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		}
+
+		user.getUserProfile().setPhotoUri(photoUri);
+		userRepository.save(user);
 	}
 
 	private User findById(UUID id) {
