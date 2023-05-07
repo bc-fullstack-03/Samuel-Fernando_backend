@@ -31,4 +31,12 @@ public class ExceptionGlobalHandler {
 		details.setMessage(authenticationException.getMessage());
 		return new ResponseEntity<>(details, HttpStatus.UNAUTHORIZED);
 	}
+	
+	@ExceptionHandler(ForbiddenException.class)
+	public ResponseEntity<?> handleForbiddenException(ForbiddenException forbiddenException) {
+		ExceptionDetails details = new ExceptionDetails();
+		details.setStatus(HttpStatus.FORBIDDEN.value());
+		details.setMessage(forbiddenException.getMessage());
+		return new ResponseEntity<>(details, HttpStatus.FORBIDDEN);
+	}
 }
