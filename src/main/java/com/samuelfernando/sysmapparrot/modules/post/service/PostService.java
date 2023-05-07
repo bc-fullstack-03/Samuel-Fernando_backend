@@ -17,6 +17,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.ForbiddenException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
 import com.samuelfernando.sysmapparrot.modules.comment.dto.CommentResponse;
@@ -93,6 +94,32 @@ public class PostService implements IPostService {
 		commentService.createPostCommentSection(newPost.getId());
 	}
 
+	public void likePost(UUID id) {
+		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST));
+		Post post = findById(id);
+	
+		if (!post.getLikes().contains(userId)) {
+			post.getLikes().add(userId);			
+			postRepository.save(post);
+		} else {
+			throw new BusinessRuleException("You already liked this post");
+		}
+	}
+	
+	public void unlikePost(UUID id) {
+		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST));
+		Post post = findById(id);
+		
+		if (post.getLikes().contains(userId)) {
+			post.getLikes().remove(userId);			
+			postRepository.save(post);
+		} else {
+			throw new BusinessRuleException("You don't have liked this post");
+		}
+	}
+	
 	@Override
 	public void updatePost(UUID id, UpdatePostRequest postRequest, MultipartFile photo) {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",

@@ -13,6 +13,8 @@ public interface IPostService {
 	public List<PostResponse> getMyPosts();
 	public PostResponse getPostById(UUID id);
 	public void createPost(CreatePostRequest post, MultipartFile photo);
+	public void likePost(UUID id);
+	public void unlikePost(UUID id);
 	public void updatePost(UUID id, UpdatePostRequest post, MultipartFile photo);
 	public void deletePost(UUID id);
 }

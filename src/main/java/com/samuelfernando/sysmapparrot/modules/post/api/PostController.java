@@ -54,17 +54,28 @@ public class PostController {
 		return commentService.getComment(id, commentId);
 	}
 
-	@PostMapping("/{id}/comments")
-	@ResponseStatus(HttpStatus.CREATED)
-	public void insertPostComment(@PathVariable UUID id, @RequestBody CommentRequest commentRequest) {
-		commentService.insertPostComment(id, commentRequest);
-	}
 
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestPart(required = false, name = "photo") MultipartFile photo,
 			@RequestPart("post") CreatePostRequest post) {
 		postService.createPost(post, photo);
+	}
+	
+	@PostMapping("/{id}/like")
+	public void likePost(@PathVariable UUID id) {
+		postService.likePost(id);
+	}
+	
+	@PostMapping("/{id}/unlike")
+	public void unlikePost(@PathVariable UUID id) {
+		postService.unlikePost(id);
+	}
+	
+	@PostMapping("/{id}/comments")
+	@ResponseStatus(HttpStatus.CREATED)
+	public void insertPostComment(@PathVariable UUID id, @RequestBody CommentRequest commentRequest) {
+		commentService.insertPostComment(id, commentRequest);
 	}
 
 	@PutMapping("/{id}")
