@@ -15,9 +15,10 @@ public class UserProfile {
 	public UserProfile() {
 	}
 
-	public UserProfile(String name, Set<UUID> following, Set<UUID> followers, LocalDateTime createdAt,
+	public UserProfile(String name, String photoUri, Set<UUID> following, Set<UUID> followers, LocalDateTime createdAt,
 			LocalDateTime updatedAt) {
 		this.name = name;
+		this.photoUri = photoUri;
 		this.following = following;
 		this.followers = followers;
 		this.createdAt = createdAt;

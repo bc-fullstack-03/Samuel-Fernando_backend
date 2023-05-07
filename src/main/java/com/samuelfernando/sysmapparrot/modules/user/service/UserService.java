@@ -72,8 +72,9 @@ public class UserService implements IUserService {
 
 		Set<UUID> genericSet = new HashSet<UUID>();
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
-		UserProfile userProfile = new UserProfile(user.name, genericSet, genericSet, createdAt, updatedAt);
-		userProfile.setPhotoUri("");
+		String photoUri = "";
+		
+		UserProfile userProfile = new UserProfile(user.name, photoUri, genericSet, genericSet, createdAt, updatedAt);
 		User newUser = new User(user.name, user.email, user.password, userProfile, createdAt, updatedAt);
 		newUser.setPassword(bcryptPasswordEncoder.encode(newUser.getPassword()));
 
