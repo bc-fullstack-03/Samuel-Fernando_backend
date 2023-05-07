@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.ForbiddenException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
 import com.samuelfernando.sysmapparrot.modules.comment.dto.CommentRequest;
@@ -65,6 +66,55 @@ public class CommentService implements ICommentService {
 		commentRepository.save(comment);
 	}
 
+	@Override
+	public void likePostComment(UUID postId, UUID commentId) {
+		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST));
+		Comment comment = findByPostId(postId);
+		Optional<UserComment> userCommentOptional = comment.getUserComments().stream()
+				.filter(userComment -> userComment.getId().equals(commentId)).findFirst();
+		
+		if (userCommentOptional.isEmpty()) {
+			throw new NotFoundException("Comment with ID: " + comment + " not found");
+		}
+		
+		UserComment userComment = userCommentOptional.get();
+		int commentIndex = comment.getUserComments().indexOf(userComment);
+		
+		if (userComment.getLikes().contains(userId)) {
+			throw new BusinessRuleException("You already liked this comment");
+		} else {
+			userComment.getLikes().add(userId);
+			comment.getUserComments().set(commentIndex, userComment);
+			commentRepository.save(comment);
+		}
+	}
+	
+	@Override
+	public void unlikePostComment(UUID postId, UUID commentId) {
+		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST));
+		
+		Comment comment = findByPostId(postId);
+		Optional<UserComment> userCommentOptional = comment.getUserComments().stream()
+				.filter(userComment -> userComment.getId().equals(commentId)).findFirst();
+		
+		if (userCommentOptional.isEmpty()) {
+			throw new NotFoundException("Comment with ID: " + comment + " not found");
+		}
+		
+		UserComment userComment = userCommentOptional.get();
+		int commentIndex = comment.getUserComments().indexOf(userComment);
+		
+		if (!userComment.getLikes().contains(userId)) {
+			throw new BusinessRuleException("You don't have liked this comment");
+		} else {
+			userComment.getLikes().remove(userId);
+			comment.getUserComments().set(commentIndex, userComment);
+			commentRepository.save(comment);
+		}
+	}
+	
 	@Override
 	public UserCommentResponse getComment(UUID postId, UUID commentId) {
 		return UserCommentResponse.of(postId, findUserCommentInList(postId, commentId));
