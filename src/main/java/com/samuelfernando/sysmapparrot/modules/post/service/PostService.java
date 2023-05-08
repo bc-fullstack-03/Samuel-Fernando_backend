@@ -11,6 +11,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
@@ -25,6 +28,7 @@ import com.samuelfernando.sysmapparrot.modules.comment.service.ICommentService;
 import com.samuelfernando.sysmapparrot.modules.file.service.IFileUploadService;
 import com.samuelfernando.sysmapparrot.modules.post.dto.CreatePostRequest;
 import com.samuelfernando.sysmapparrot.modules.post.dto.PostResponse;
+import com.samuelfernando.sysmapparrot.modules.post.dto.PostResponsePage;
 import com.samuelfernando.sysmapparrot.modules.post.dto.UpdatePostRequest;
 import com.samuelfernando.sysmapparrot.modules.post.entity.Post;
 import com.samuelfernando.sysmapparrot.modules.post.repository.PostRepository;
@@ -61,19 +65,21 @@ public class PostService implements IPostService {
 	}
 
 	@Override
-	public List<PostResponse> getFeed(UserProfileResponse userProfileResponse) {
+	public PostResponsePage getFeed(UserProfileResponse userProfileResponse, int page) {
 		Set<UUID> profileIds = new HashSet<>();
 
 		profileIds.add(userProfileResponse.idUser);
 		profileIds.addAll(userProfileResponse.following);
 
-		List<Post> posts = postRepository.findAllPostsByUserIdIn(profileIds);
-		posts.sort((post1, post2) -> post2.getCreatedAt().compareTo(post1.getCreatedAt()));
+		Page<Post> postsPage = postRepository.findAllPostsByUserIdIn(profileIds,
+				PageRequest.of(page, 10, Sort.by("createdAt").descending()));
 
-		return posts.stream().map(post -> {
+		List<PostResponse> postResponseList = postsPage.stream().map(post -> {
 			CommentResponse commentResponse = commentService.getComments(post.getId());
 			return PostResponse.of(post, commentResponse);
 		}).collect(Collectors.toList());
+
+		return PostResponsePage.of(postsPage, postResponseList);
 	}
 
 	@Override
