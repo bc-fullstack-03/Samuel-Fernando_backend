@@ -61,6 +61,22 @@ public class PostService implements IPostService {
 	}
 
 	@Override
+	public List<PostResponse> getFeed(UserProfileResponse userProfileResponse) {
+		Set<UUID> profileIds = new HashSet<>();
+
+		profileIds.add(userProfileResponse.idUser);
+		profileIds.addAll(userProfileResponse.following);
+
+		List<Post> posts = postRepository.findAllPostsByUserIdIn(profileIds);
+		posts.sort((post1, post2) -> post2.getCreatedAt().compareTo(post1.getCreatedAt()));
+
+		return posts.stream().map(post -> {
+			CommentResponse commentResponse = commentService.getComments(post.getId());
+			return PostResponse.of(post, commentResponse);
+		}).collect(Collectors.toList());
+	}
+
+	@Override
 	@Transactional
 	public void createPost(CreatePostRequest post, MultipartFile photo) {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
@@ -98,39 +114,39 @@ public class PostService implements IPostService {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST));
 		Post post = findById(id);
-	
+
 		if (!post.getLikes().contains(userId)) {
-			post.getLikes().add(userId);			
+			post.getLikes().add(userId);
 			postRepository.save(post);
 		} else {
 			throw new BusinessRuleException("You already liked this post");
 		}
 	}
-	
+
 	public void unlikePost(UUID id) {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST));
 		Post post = findById(id);
-		
+
 		if (post.getLikes().contains(userId)) {
-			post.getLikes().remove(userId);			
+			post.getLikes().remove(userId);
 			postRepository.save(post);
 		} else {
 			throw new BusinessRuleException("You don't have liked this post");
 		}
 	}
-	
+
 	@Override
 	public void updatePost(UUID id, UpdatePostRequest postRequest, MultipartFile photo) {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST));
 		Post post = findById(id);
 		verifyUserPermissionToModifyData(userId, post);
-		
+
 		post.setTitle(postRequest.title);
 		post.setDescription(postRequest.description);
 		post.setImage(postRequest.isImage);
-		
+
 		if (!isEmpty(photo) && postRequest.isImage == true) {
 			String filename = post.getId() + "."
 					+ photo.getOriginalFilename().substring(photo.getOriginalFilename().lastIndexOf(".") + 1);
@@ -140,11 +156,11 @@ public class PostService implements IPostService {
 				e.printStackTrace();
 			}
 		}
-		
+
 		post.setUpdatedAt(LocalDateTime.now());
 		postRepository.save(post);
 	}
-	
+
 	@Override
 	@Transactional
 	public void deletePost(UUID id) {
@@ -152,11 +168,11 @@ public class PostService implements IPostService {
 				RequestAttributes.SCOPE_REQUEST));
 		Post post = findById(id);
 		verifyUserPermissionToModifyData(userId, post);
-		
+
 		commentService.deletePostCommentSection(post.getId());
 		postRepository.delete(post);
 	}
-	
+
 	private Post findById(UUID id) {
 		Optional<Post> post = postRepository.findById(id);
 
