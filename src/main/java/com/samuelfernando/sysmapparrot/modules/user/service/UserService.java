@@ -19,8 +19,10 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
+import com.samuelfernando.sysmapparrot.config.exception.ForbiddenException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
 import com.samuelfernando.sysmapparrot.modules.file.service.IFileUploadService;
+import com.samuelfernando.sysmapparrot.modules.profile.dto.UpdateUserProfileRequest;
 import com.samuelfernando.sysmapparrot.modules.profile.dto.UserProfileResponse;
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 import com.samuelfernando.sysmapparrot.modules.user.dto.CreateUserRequest;
@@ -73,7 +75,7 @@ public class UserService implements IUserService {
 		Set<UUID> genericSet = new HashSet<UUID>();
 		LocalDateTime createdAt = LocalDateTime.now(), updatedAt = LocalDateTime.now();
 		String photoUri = "";
-		
+
 		UserProfile userProfile = new UserProfile(user.name, photoUri, genericSet, genericSet, createdAt, updatedAt);
 		User newUser = new User(user.name, user.email, user.password, userProfile, createdAt, updatedAt);
 		newUser.setPassword(bcryptPasswordEncoder.encode(newUser.getPassword()));
@@ -125,6 +127,24 @@ public class UserService implements IUserService {
 		userRepository.save(user);
 	}
 
+	@Override
+	public void updateUserProfile(UUID id, UpdateUserProfileRequest updateProfileRequest) {
+		User userId = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST)));
+		UserProfileResponse userProfileResponse = findUserProfileById(id);
+
+		verifyUserPermissionToModifyData(id, userId);
+		LocalDateTime updatedAt = LocalDateTime.now();
+
+		UserProfile userProfile = new UserProfile(updateProfileRequest.name, userProfileResponse.photoUri,
+				userProfileResponse.followers, userProfileResponse.following, userProfileResponse.createdAt, updatedAt);
+
+		User user = findById(id);
+		user.setUserProfile(userProfile);
+		
+		userRepository.save(user);
+	}
+
 	private User findById(UUID id) {
 		Optional<User> user = userRepository.findById(id);
 
@@ -139,6 +159,12 @@ public class UserService implements IUserService {
 		if (userToBeFollowed.getUserProfile().getFollowers().contains(userToBeFollowing.getId())
 				|| userToBeFollowing.getUserProfile().getFollowing().contains(userToBeFollowed.getId())) {
 			throw new BusinessRuleException("Already followed the user id: " + userToBeFollowed.getId());
+		}
+	}
+
+	private void verifyUserPermissionToModifyData(UUID userId, User user) {
+		if (!userId.equals(user.getId())) {
+			throw new ForbiddenException("You don't have permission to change the user content");
 		}
 	}
 }
