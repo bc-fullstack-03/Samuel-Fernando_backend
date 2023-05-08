@@ -57,6 +57,15 @@ public class PostService implements IPostService {
 		}).collect(Collectors.toList());
 	}
 
+
+	@Override
+	public List<PostResponse> getAllPostsByUserId(UUID userId) {
+		return postRepository.findAllByUserId(userId).stream().map(post -> {
+			CommentResponse commentResponse = commentService.getComments(post.getId());
+			return PostResponse.of(post, commentResponse);
+		}).collect(Collectors.toList());
+	}
+	
 	@Override
 	public PostResponse getPostById(UUID id) {
 		Post post = findById(id);

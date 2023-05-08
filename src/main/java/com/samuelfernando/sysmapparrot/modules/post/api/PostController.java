@@ -36,6 +36,11 @@ public class PostController {
 	public PostResponse getPostById(@PathVariable UUID id) {
 		return postService.getPostById(id);
 	}
+	
+	@GetMapping("/profile/{userId}")
+	public List<PostResponse> getAllPostsByUserId(@PathVariable UUID userId) {
+		return postService.getAllPostsByUserId(userId);
+	}
 
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)

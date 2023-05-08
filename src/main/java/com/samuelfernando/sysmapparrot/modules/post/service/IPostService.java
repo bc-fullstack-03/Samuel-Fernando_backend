@@ -13,6 +13,7 @@ import com.samuelfernando.sysmapparrot.modules.profile.dto.UserProfileResponse;
 
 public interface IPostService {
 	public List<PostResponse> getMyPosts();
+	public List<PostResponse> getAllPostsByUserId(UUID userId);
 	public PostResponse getPostById(UUID id);
 	public PostResponsePage getFeed(UserProfileResponse userProfileResponse, int page);
 	public void createPost(CreatePostRequest post, MultipartFile photo);

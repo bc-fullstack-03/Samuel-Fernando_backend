@@ -11,6 +11,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import com.samuelfernando.sysmapparrot.modules.post.entity.Post;
 
 public interface PostRepository extends MongoRepository<Post, UUID> {
-	List<Post> findAllByUserId(UUID postId);
+	List<Post> findAllByUserId(UUID userId);
 	Page<Post> findAllPostsByUserIdIn(Set<UUID> profileIds, Pageable pageable);
 }
