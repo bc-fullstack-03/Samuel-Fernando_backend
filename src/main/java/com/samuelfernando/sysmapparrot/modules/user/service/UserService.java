@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +23,13 @@ import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.ForbiddenException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
 import com.samuelfernando.sysmapparrot.modules.file.service.IFileUploadService;
+import com.samuelfernando.sysmapparrot.modules.post.dto.PostResponse;
+import com.samuelfernando.sysmapparrot.modules.post.service.IPostService;
 import com.samuelfernando.sysmapparrot.modules.profile.dto.UpdateUserProfileRequest;
 import com.samuelfernando.sysmapparrot.modules.profile.dto.UserProfileResponse;
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 import com.samuelfernando.sysmapparrot.modules.user.dto.CreateUserRequest;
+import com.samuelfernando.sysmapparrot.modules.user.dto.UpdateUserRequest;
 import com.samuelfernando.sysmapparrot.modules.user.entity.User;
 import com.samuelfernando.sysmapparrot.modules.user.repository.UserRepository;
 
@@ -37,6 +41,12 @@ public class UserService implements IUserService {
 	private PasswordEncoder bcryptPasswordEncoder;
 	@Autowired
 	private IFileUploadService fileUploadService;
+	private IPostService postService;
+	
+	@Autowired
+	public UserService(@Lazy IPostService postService) {
+        this.postService = postService;
+    }
 
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
@@ -108,6 +118,27 @@ public class UserService implements IUserService {
 		userRepository.save(userToBeUnfollowing);
 	}
 
+	@Override
+	public void updateUser(UUID id, UpdateUserRequest updateUserRequest) {
+		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST)));
+		
+		verifyUserPermissionToModifyData(id, user);
+		LocalDateTime updatedAt = LocalDateTime.now();
+		
+		user.setName(updateUserRequest.name);
+		user.setEmail(updateUserRequest.email);
+		user.setUpdatedAt(updatedAt);
+		
+		boolean isPasswordValid = validateNewPassword(updateUserRequest, user.getPassword());
+		
+		if (isPasswordValid && !updateUserRequest.newPassword.equals("")) {
+			user.setPassword(bcryptPasswordEncoder.encode(updateUserRequest.newPassword));
+		}
+		
+		userRepository.save(user);
+	}
+	
 	public void uploadProfilePhoto(MultipartFile photo) throws Exception {
 		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST)));
@@ -129,20 +160,33 @@ public class UserService implements IUserService {
 
 	@Override
 	public void updateUserProfile(UUID id, UpdateUserProfileRequest updateProfileRequest) {
-		User userId = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST)));
 		UserProfileResponse userProfileResponse = findUserProfileById(id);
 
-		verifyUserPermissionToModifyData(id, userId);
+		verifyUserPermissionToModifyData(id, user);
 		LocalDateTime updatedAt = LocalDateTime.now();
 
 		UserProfile userProfile = new UserProfile(updateProfileRequest.name, userProfileResponse.photoUri,
 				userProfileResponse.followers, userProfileResponse.following, userProfileResponse.createdAt, updatedAt);
-
-		User user = findById(id);
+		
 		user.setUserProfile(userProfile);
 		
 		userRepository.save(user);
+	}
+	
+	@Override
+	@Transactional
+	public void deleteUser(UUID id) {
+		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
+				RequestAttributes.SCOPE_REQUEST)));
+		
+		verifyUserPermissionToModifyData(id, user);
+		List<PostResponse> posts = postService.getAllPostsByUserId(id);
+		System.out.println(posts);
+		
+		posts.stream().forEach(post -> postService.deletePost(post.id));
+		userRepository.delete(user);
 	}
 
 	private User findById(UUID id) {
@@ -166,5 +210,17 @@ public class UserService implements IUserService {
 		if (!userId.equals(user.getId())) {
 			throw new ForbiddenException("You don't have permission to change the user content");
 		}
+	}
+	
+	private boolean validateNewPassword(UpdateUserRequest updateUserRequest, String password) {
+		if (updateUserRequest.newPassword.equals("") && updateUserRequest.oldPassword.equals("")) {
+			return false;
+		}
+		
+		if (!bcryptPasswordEncoder.matches(updateUserRequest.oldPassword, password)) {
+			throw new BusinessRuleException("Incorrect password");
+		}
+		
+		return true;
 	}
 }
