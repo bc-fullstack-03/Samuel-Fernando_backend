@@ -123,6 +123,12 @@ public class UserService implements IUserService {
 		User user = findById(UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST)));
 		
+		Optional<User> userWithEmailAlreadyUsed = userRepository.findByEmail(updateUserRequest.email);
+		
+		if (userWithEmailAlreadyUsed.isPresent() && !userWithEmailAlreadyUsed.get().getEmail().equals(user.getEmail())) {
+			throw new BusinessRuleException("An error occurred when trying to update a user");
+		}
+		
 		verifyUserPermissionToModifyData(id, user);
 		LocalDateTime updatedAt = LocalDateTime.now();
 		
@@ -219,6 +225,10 @@ public class UserService implements IUserService {
 		
 		if (!bcryptPasswordEncoder.matches(updateUserRequest.oldPassword, password)) {
 			throw new BusinessRuleException("Incorrect password");
+		}
+		
+		if (updateUserRequest.newPassword.length() < 3) {
+			throw new BusinessRuleException("newPassword must have more than 3 characters");
 		}
 		
 		return true;
