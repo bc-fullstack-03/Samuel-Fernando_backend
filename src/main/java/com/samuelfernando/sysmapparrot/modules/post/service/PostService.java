@@ -120,10 +120,6 @@ public class PostService implements IPostService {
 		Set<UUID> likes = new HashSet<UUID>();
 		Post newPost = new Post(post.title, post.description, userId, userProfile, likes, post.isImage, createdAt,
 				updatedAt);
-
-		if (post.isImage == true) {
-			newPost.setDescription("");
-		}
 		
 		if (!photo.isEmpty() && post.isImage == true) {
 			String filename = newPost.getId() + "."
@@ -133,6 +129,8 @@ public class PostService implements IPostService {
 			} catch (Exception e) {
 				throw new InternalServerErrorException("An error ocurred when trying to save the photo");
 			}
+		} else {
+			newPost.setImage(false);
 		}
 	
 		postRepository.save(newPost);
