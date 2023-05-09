@@ -26,6 +26,7 @@ public class AwsConfig {
 				.standard()
 				.withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
 				.withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Url, Regions.US_WEST_2.getName()))
+				.withPathStyleAccessEnabled(true)
 				.build();
 	}
 }

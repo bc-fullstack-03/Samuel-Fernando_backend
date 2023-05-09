@@ -24,6 +24,8 @@ public class AwsService {
 	private String s3Url;
 	@Value("${app-config.secrets.aws-bucket-name}")
 	private String bucketName;
+	@Value("${app-config.api-env}")
+	private String apiEnv;
 
 	public String upload(MultipartFile multipartFile, String filename) throws Exception {
 		String fileUri = "";
@@ -33,7 +35,11 @@ public class AwsService {
 			amazonS3.putObject(new PutObjectRequest(bucketName, filename, convertedFile)
 					.withCannedAcl(CannedAccessControlList.PublicRead));
 			
-			fileUri = s3Url + "/" + bucketName + "/" + filename;
+			if (apiEnv.equals("local")) {
+				fileUri = s3Url + "/" +bucketName +"/" +filename;				
+			} else if (apiEnv.equals("container")) {
+				fileUri = "http://localhost:4566/" +bucketName + "/" +filename ;
+			}
 			
 			convertedFile.delete();
 		} catch (Exception e) {
