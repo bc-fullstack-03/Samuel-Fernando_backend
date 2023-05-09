@@ -21,6 +21,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.internetmonitor.model.InternalServerErrorException;
 import com.samuelfernando.sysmapparrot.config.exception.BusinessRuleException;
 import com.samuelfernando.sysmapparrot.config.exception.ForbiddenException;
 import com.samuelfernando.sysmapparrot.config.exception.NotFoundException;
@@ -130,10 +131,10 @@ public class PostService implements IPostService {
 			try {
 				newPost.setDescription(fileUploadService.upload(photo, filename));
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new InternalServerErrorException("An error ocurred when trying to save the photo");
 			}
 		}
-
+	
 		postRepository.save(newPost);
 		commentService.createPostCommentSection(newPost.getId());
 	}
