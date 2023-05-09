@@ -16,7 +16,7 @@ public class FeedController {
 	IFeedService feedService;
 	
 	@GetMapping("")
-	public PostResponsePage getFeed(@RequestParam int page) {
+	public PostResponsePage getFeed(@RequestParam(required = false) Integer page) {
 		return feedService.generateFeed(page);
 	}
 }

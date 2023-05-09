@@ -20,11 +20,15 @@ public class FeedService implements IFeedService {
 	IPostService postService;
 	
 	@Override
-	public PostResponsePage generateFeed(int page) {
+	public PostResponsePage generateFeed(Integer page) {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST));
 		UserProfileResponse userProfileResponse = userService.findUserProfileById(userId);
-				
+		
+		if (page == null) {
+			page = 0;
+		}
+		
 		return postService.getFeed(userProfileResponse, page);
 	}
 	
