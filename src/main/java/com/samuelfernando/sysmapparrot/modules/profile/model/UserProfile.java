@@ -4,7 +4,12 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class UserProfile {
+	@NotBlank(message = "Name cant be blank")
+	@Size(min = 3, message = "name must contain at least 3 characters")
 	private String name;
 	private String photoUri;
 	private Set<UUID> following;
