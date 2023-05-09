@@ -8,14 +8,21 @@ import org.springframework.data.annotation.Id;
 
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public class Post {
 	@Id
 	private UUID id;
+	@NotBlank(message = "title cant be blank")
+	@Size(min = 3, message = "title must contain at least 3 characters")
 	private String title;
 	private String description;
 	private UUID userId;
 	private UserProfile userProfile;
 	private Set<UUID> likes;
+	@NotNull(message = "isImage property is required")
 	private boolean isImage;
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

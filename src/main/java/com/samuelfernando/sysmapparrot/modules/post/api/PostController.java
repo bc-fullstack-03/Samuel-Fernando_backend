@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +27,7 @@ import com.samuelfernando.sysmapparrot.modules.post.service.IPostService;
 public class PostController {
 	@Autowired
 	private IPostService postService;
-	
+
 	@GetMapping("")
 	public List<PostResponse> getMyPosts() {
 		return postService.getMyPosts();
@@ -36,7 +37,7 @@ public class PostController {
 	public PostResponse getPostById(@PathVariable UUID id) {
 		return postService.getPostById(id);
 	}
-	
+
 	@GetMapping("/profile/{userId}")
 	public List<PostResponse> getAllPostsByUserId(@PathVariable UUID userId) {
 		return postService.getAllPostsByUserId(userId);
@@ -45,26 +46,26 @@ public class PostController {
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void create(@RequestPart(required = false, name = "photo") MultipartFile photo,
-			@RequestPart("post") CreatePostRequest post) {
+			@RequestPart("post") @Validated CreatePostRequest post) {
 		postService.createPost(post, photo);
 	}
-	
+
 	@PostMapping("/{id}/like")
 	public void likePost(@PathVariable UUID id) {
 		postService.likePost(id);
 	}
-	
+
 	@PostMapping("/{id}/unlike")
 	public void unlikePost(@PathVariable UUID id) {
 		postService.unlikePost(id);
 	}
-	
+
 	@PutMapping("/{id}")
 	public void updatePost(@PathVariable UUID id, @RequestPart(required = false, name = "photo") MultipartFile photo,
-			@RequestPart("post") UpdatePostRequest updatePostRequest) {
+			@RequestPart("post") @Validated UpdatePostRequest updatePostRequest) {
 		postService.updatePost(id, updatePostRequest, photo);
 	}
-	
+
 	@DeleteMapping("/{id}")
 	public void deletePost(@PathVariable UUID id) {
 		postService.deletePost(id);
