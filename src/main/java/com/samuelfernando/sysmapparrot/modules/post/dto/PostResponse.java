@@ -20,7 +20,7 @@ public class PostResponse {
 	public boolean isImage;
 	public LocalDateTime createdAt;
 	public LocalDateTime updatedAt;
-	public List<UserComment> comments;  
+	public List<UserComment> comments;
 	
 	public PostResponse() {
 	}

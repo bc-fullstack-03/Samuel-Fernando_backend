@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,21 +48,31 @@ public class UserService implements IUserService {
 	public UserService(@Lazy IPostService postService) {
         this.postService = postService;
     }
+	
+	@Value("${app-config.secrets.aws-s3-url}")
+	private String s3Url;
+	@Value("${app-config.api-env}")
+	private String apiEnv;
 
 	@Override
 	public List<UserProfileResponse> findAllUsersProfiles(String name) {
 		if (isEmpty(name)) {
-			return userRepository.findAll().stream().map(user -> UserProfileResponse.of(user))
-					.collect(Collectors.toList());
+			return userRepository.findAll().stream().map(user -> {
+				user.getUserProfile().setPhotoUri(generatePhotoUri(user));
+				return UserProfileResponse.of(user);
+			}).collect(Collectors.toList());
 		} else {
-			return userRepository.findAllByNameLikeIgnoreCase(name).stream().map(user -> UserProfileResponse.of(user))
-					.collect(Collectors.toList());
+			return userRepository.findAllByNameLikeIgnoreCase(name).stream().map(user -> {
+				user.getUserProfile().setPhotoUri(generatePhotoUri(user));
+				return UserProfileResponse.of(user);
+			}).collect(Collectors.toList());
 		}
 	}
 
 	@Override
 	public UserProfileResponse findUserProfileById(UUID id) {
 		User user = findById(id);
+		user.getUserProfile().setPhotoUri(generatePhotoUri(user));
 		return UserProfileResponse.of(user);
 	}
 
@@ -232,5 +243,17 @@ public class UserService implements IUserService {
 		}
 		
 		return true;
+	}
+	
+	private String generatePhotoUri(User user) {
+		if (!user.getUserProfile().getPhotoUri().equals("")) {
+			if (apiEnv.equals("container")) {
+				return "http://localhost:4566" +user.getUserProfile().getPhotoUri(); 
+			} else {
+				return s3Url +user.getUserProfile().getPhotoUri();
+			}
+		}
+		
+		return user.getUserProfile().getPhotoUri();
 	}
 }

@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -47,28 +48,35 @@ public class PostService implements IPostService {
 	@Autowired
 	private ICommentService commentService;
 
+	@Value("${app-config.secrets.aws-s3-url}")
+	private String s3Url;
+	@Value("${app-config.api-env}")
+	private String apiEnv;
+
 	@Override
 	public List<PostResponse> getMyPosts() {
 		UUID userId = UUID.fromString((String) RequestContextHolder.getRequestAttributes().getAttribute("userId",
 				RequestAttributes.SCOPE_REQUEST));
 		return postRepository.findAllByUserId(userId).stream().map(post -> {
+			post.setDescription(generateDescription(post));
 			CommentResponse commentResponse = commentService.getComments(post.getId());
 			return PostResponse.of(post, commentResponse);
 		}).collect(Collectors.toList());
 	}
-
 
 	@Override
 	public List<PostResponse> getAllPostsByUserId(UUID userId) {
 		return postRepository.findAllByUserId(userId).stream().map(post -> {
+			post.setDescription(generateDescription(post));
 			CommentResponse commentResponse = commentService.getComments(post.getId());
 			return PostResponse.of(post, commentResponse);
 		}).collect(Collectors.toList());
 	}
-	
+
 	@Override
 	public PostResponse getPostById(UUID id) {
 		Post post = findById(id);
+		post.setDescription(generateDescription(post));
 		CommentResponse commentResponse = commentService.getComments(id);
 		return PostResponse.of(post, commentResponse);
 	}
@@ -84,6 +92,7 @@ public class PostService implements IPostService {
 				PageRequest.of(page, 10, Sort.by("createdAt").descending()));
 
 		List<PostResponse> postResponseList = postsPage.stream().map(post -> {
+			post.setDescription(generateDescription(post));
 			CommentResponse commentResponse = commentService.getComments(post.getId());
 			return PostResponse.of(post, commentResponse);
 		}).collect(Collectors.toList());
@@ -111,6 +120,10 @@ public class PostService implements IPostService {
 		Post newPost = new Post(post.title, post.description, userId, userProfile, likes, post.isImage, createdAt,
 				updatedAt);
 
+		if (post.isImage == true) {
+			newPost.setDescription("");
+		}
+		
 		if (!isEmpty(photo) && post.isImage == true) {
 			String filename = newPost.getId() + "."
 					+ photo.getOriginalFilename().substring(photo.getOriginalFilename().lastIndexOf(".") + 1);
@@ -202,5 +215,17 @@ public class PostService implements IPostService {
 		if (!userId.equals(post.getUserId())) {
 			throw new ForbiddenException("You don't have permission to change the post content");
 		}
+	}
+
+	private String generateDescription(Post post) {
+		if (post.isImage() == true) {
+			if (apiEnv.equals("container")) {
+				return "http://localhost:4566" + post.getDescription();
+			} else {
+				return s3Url + post.getDescription();
+			}
+		}
+
+		return post.getDescription();
 	}
 }
