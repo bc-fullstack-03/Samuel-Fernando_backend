@@ -7,11 +7,21 @@ import org.springframework.data.annotation.Id;
 
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class User {
 	@Id
 	private UUID id;
+	@NotBlank(message = "Name cant be blank")
+	@Size(min = 3, message = "name must contain at least 3 characters")
 	private String name;
+	@Email(message = "invalid email")
+	@NotBlank(message = "email cant be blank")
 	private String email;
+	@NotBlank(message = "password cant be blank")
+	@Size(min = 3, message = "password must contain at least 3 characters")
 	private String password;
 	private UserProfile userProfile;
 	private LocalDateTime createdAt;

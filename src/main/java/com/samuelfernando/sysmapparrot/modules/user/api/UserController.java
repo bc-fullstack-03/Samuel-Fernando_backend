@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,12 +26,12 @@ public class UserController {
 	
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
-	public void create(@RequestBody CreateUserRequest user) {
+	public void create(@RequestBody @Validated CreateUserRequest user) {
 		userService.createUser(user);
 	}
 
 	@PutMapping("/{id}")
-	public void update(@PathVariable UUID id, @RequestBody UpdateUserRequest updateUserRequest) {
+	public void update(@PathVariable UUID id, @RequestBody @Validated UpdateUserRequest updateUserRequest) {
 		userService.updateUser(id, updateUserRequest);
 	}
 	
