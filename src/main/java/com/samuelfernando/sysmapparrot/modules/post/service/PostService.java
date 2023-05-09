@@ -125,7 +125,7 @@ public class PostService implements IPostService {
 			newPost.setDescription("");
 		}
 		
-		if (!isEmpty(photo) && post.isImage == true) {
+		if (!photo.isEmpty() && post.isImage == true) {
 			String filename = newPost.getId() + "."
 					+ photo.getOriginalFilename().substring(photo.getOriginalFilename().lastIndexOf(".") + 1);
 			try {
