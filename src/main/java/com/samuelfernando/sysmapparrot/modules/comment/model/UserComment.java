@@ -6,8 +6,13 @@ import java.util.UUID;
 
 import com.samuelfernando.sysmapparrot.modules.profile.model.UserProfile;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class UserComment {
 	private UUID id;
+	@NotBlank(message = "description cant be blank")
+	@Size(min = 3, message = "description must contain at least 3 characters")
 	private String description;
 	private UUID userId;
 	private UserProfile userProfile;

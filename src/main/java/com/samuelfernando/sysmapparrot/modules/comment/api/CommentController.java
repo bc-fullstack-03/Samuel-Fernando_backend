@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,38 +25,39 @@ import com.samuelfernando.sysmapparrot.modules.comment.service.ICommentService;
 public class CommentController {
 	@Autowired
 	private ICommentService commentService;
-	
+
 	@GetMapping("/{id}/comments")
 	public CommentResponse getComments(@PathVariable UUID id) {
 		return commentService.getComments(id);
 	}
-	
+
 	@GetMapping("/{id}/comments/{commentId}")
 	public UserCommentResponse getComment(@PathVariable UUID id, @PathVariable UUID commentId) {
 		return commentService.getComment(id, commentId);
 	}
-	
+
 	@PostMapping("/{id}/comments/{commentId}/like")
 	public void likePostComment(@PathVariable UUID id, @PathVariable UUID commentId) {
 		commentService.likePostComment(id, commentId);
 	}
-	
+
 	@PostMapping("/{id}/comments/{commentId}/unlike")
 	public void unlikePostComment(@PathVariable UUID id, @PathVariable UUID commentId) {
 		commentService.unlikePostComment(id, commentId);
 	}
-	
+
 	@PostMapping("/{id}/comments")
 	@ResponseStatus(HttpStatus.CREATED)
-	public void insertPostComment(@PathVariable UUID id, @RequestBody CommentRequest commentRequest) {
+	public void insertPostComment(@PathVariable UUID id, @RequestBody @Validated CommentRequest commentRequest) {
 		commentService.insertPostComment(id, commentRequest);
 	}
-	
+
 	@PutMapping("/{id}/comments/{userCommentId}")
-	public void updateUserComment(@PathVariable UUID id, @PathVariable UUID userCommentId, @RequestBody CommentRequest commentRequest) {
+	public void updateUserComment(@PathVariable UUID id, @PathVariable UUID userCommentId,
+			@RequestBody @Validated CommentRequest commentRequest) {
 		commentService.updateUserComment(id, userCommentId, commentRequest);
 	}
-	
+
 	@DeleteMapping("/{id}/comments/{userCommentId}")
 	public void deletePost(@PathVariable UUID id, @PathVariable UUID userCommentId) {
 		commentService.deleteUserComment(id, userCommentId);
